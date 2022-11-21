@@ -2,13 +2,13 @@ const express = require('express');
 
 const router = express.Router()
 
-const Model = require('../models/model');
+const Model = require('../models/index.js');
 
 module.exports = router;
 
 //Post Method
 router.post('/post', async (req, res) => {
-  const data = new Model({
+  const data = new Model.day({
     bar: req.body.bar,
     date: req.body.date,
     amount: req.body.amount
@@ -26,7 +26,7 @@ router.post('/post', async (req, res) => {
 //Get all Method
 router.get('/getAll', async (req, res) => {
   try {
-    const data = await Model.find();
+    const data = await Model.day.find();
     res.json(data)
   }
   catch (error) {
@@ -45,16 +45,9 @@ router.get('/getOne/:id', async (req, res) => {
   }
 })
 
-//Get by Date and Bar
-router.get('/getDate/:date/:bar', async (req, res) => {
-  try {
-    const data = await Model.find({ date: req.params.date, bar: req.params.bar });
-    res.json(data)
-  }
-  catch (error) {
-    res.status(500).json({ message: error.message })
-  }
-})
+
+//Check user login
+//router.post()
 
 
 //Update by ID Method
