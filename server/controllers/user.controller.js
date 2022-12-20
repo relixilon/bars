@@ -1,9 +1,9 @@
 const db = require("../models");
 const Day = db.day;
 const Image = db.image;
+const Bar = db.bar;
 const fs = require('fs');
-const path = require('path');
-
+const User = require("../models/user");
 exports.allAccess = (req, res) => {
   res.status(200).send("Public Content.");
 };
@@ -112,14 +112,10 @@ exports.submitDay = (req, res) => {
 };
 
 exports.submitImage = (req, res, next) => {
-  console.log(req.file)
   const image = new Image({
     date: req.body.date,
     bar: req.body.bar,
-    img: {
-      data: fs.readFileSync(path.join('/home/mario/projects/bar/server/uploads/' + req.file.filename)),
-      contentType: 'image/png'
-    }
+    path: req.file.path,
   });
   image.save((err, image) => {
     if (err) {
@@ -130,22 +126,98 @@ exports.submitImage = (req, res, next) => {
   })
 };
 
-exports.getImage = (req, res) => {
+exports.getImageAmount = (req, res) => {
   Image.find({
-    date: req.body.date,
-    bar: req.body.bar
-  }).exec((err, image) => {
+    date: req.query.date,
+    bar: req.query.bar
+  }).exec((err, images) => {
     if (err) {
       res.status(500).send({ message: err })
       return
     }
-    if (!image) {
+    if (!images) {
+      return res.status(200).send({ amount: 0 })
+    }
+    res.status(200).send({ amount: images.length, images: images })
+  })
+};
+
+exports.getImage = (req, res) => {
+  Image.findOne({
+    _id: req.query.id,
+  }).exec((err, img) => {
+    if (err) {
+      res.status(500).send({ message: err })
+      return
+    }
+    if (!img) {
       return res.status(200).send({ message: 'No image for that day' })
     }
-    console.log(Object.keys(image))
-    console.log(image)
-    res.status(200).sendFile('')
+    let bitmap = fs.readFileSync('/home/mario/projects/bar/server/' + img.path);
+    let base64 = bitmap.toString('base64');
+    res.status(200).send({ img: base64 })
   })
+};
+
+exports.getImages = (req, res) => {
+  Image.find({
+    date: req.query.date,
+    bar: req.query.bar
+  }).exec((err, images) => {
+    if (err) {
+      res.status(500).send({ message: err })
+      return
+    }
+    if (!images) {
+      return res.status(200).send({ images: [] })
+    }
+    let bitmaps = []
+    images.forEach(img => {
+      let bitmap = fs.readFileSync('/home/mario/projects/bar/server/' + img.path);
+      let base64 = bitmap.toString('base64');
+      bitmaps.push(base64)
+    });
+    res.status(200).send({ images: bitmaps })
+  })
+};
+
+
+exports.getUser = (req, res) => {
+  User.findOne({
+    _id: req.userId
+  }).exec((err, user) => {
+    if (err) {
+      res.status(500).send({ message: err })
+      return
+    }
+    if (!user) {
+      return res.status(200).send({ message: 'No user for that id' })
+    }
+    barNames = []
+    Bar.find({
+      _id: { $in: user.bars }
+    }).exec((err, bars) => {
+      if (err) {
+        res.status(500).send({ message: err })
+        return
+      }
+      if (!bars) {
+        console.log('No bars for that user')
+        return
+      }
+      res.status(200).send({
+        username: user.username,
+        roles: user.roles,
+        bars: bars
+      })
+
+    })
+
+  })
+};
+
+exports.loginStatus = (req, res) => {
+  res.status(200).send({ message: 'Logged in' })
 };
 
 

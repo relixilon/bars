@@ -23,6 +23,9 @@ const routes = require('./routes/routes.js')
 
 const app = express();
 
+app.use(express.static('uploads'))
+
+
 var whitelist = [
   'http://192.168.1.13:8080',
 ];

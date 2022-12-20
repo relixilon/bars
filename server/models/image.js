@@ -11,11 +11,10 @@ const Image = mongoose.model(
       type: String,
       required: true,
     },
-    img: {
-      data: Buffer,
-      contentType: String,
-    },
-
+    path: {
+      type: String,
+      required: true,
+    }
   })
 );
 
