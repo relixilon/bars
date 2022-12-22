@@ -4,6 +4,7 @@ const Image = db.image;
 const Bar = db.bar;
 const fs = require('fs');
 const User = require("../models/user");
+const { dashboard } = require("../helpers");
 exports.allAccess = (req, res) => {
   res.status(200).send("Public Content.");
 };
@@ -126,22 +127,6 @@ exports.submitImage = (req, res, next) => {
   })
 };
 
-exports.getImageAmount = (req, res) => {
-  Image.find({
-    date: req.query.date,
-    bar: req.query.bar
-  }).exec((err, images) => {
-    if (err) {
-      res.status(500).send({ message: err })
-      return
-    }
-    if (!images) {
-      return res.status(200).send({ amount: 0 })
-    }
-    res.status(200).send({ amount: images.length, images: images })
-  })
-};
-
 exports.getImage = (req, res) => {
   Image.findOne({
     _id: req.query.id,
@@ -175,7 +160,10 @@ exports.getImages = (req, res) => {
     images.forEach(img => {
       let bitmap = fs.readFileSync('/home/mario/projects/bar/server/' + img.path);
       let base64 = bitmap.toString('base64');
-      bitmaps.push(base64)
+      bitmaps.push({
+        id: img._id,
+        img: base64
+      })
     });
     res.status(200).send({ images: bitmaps })
   })
@@ -216,16 +204,50 @@ exports.getUser = (req, res) => {
   })
 };
 
+exports.deleteImage = (req, res) => {
+  Image.findOne({
+    _id: req.body.id,
+  }).exec((err, img) => {
+    if (err) {
+      res.status(500).send({ message: err })
+      return
+    }
+    if (!img) {
+      return res.status(200).send({ message: 'No image for that id' })
+    }
+    fs.unlinkSync('/home/mario/projects/bar/server/' + img.path)
+    Image.deleteOne({
+      _id: req.body.id,
+    }).exec((err, img) => {
+      if (err) {
+        res.status(500).send({ message: err })
+        return
+      }
+      if (!img) {
+        return res.status(200).send({ message: 'No image for that id' })
+      }
+      res.status(200).send({ message: 'Image deleted' })
+    })
+  })
+};
+
+exports.getDashboard = (req, res) => {
+  console.log(req.query)
+  Day.find({
+    bar: req.query.bar
+  }).exec((err, days) => {
+    if (err) {
+      res.status(500).send({ message: err })
+      return
+    }
+    if (!days) {
+      return res.status(200).send({ message: 'No days for that bar' })
+    }
+    data = dashboard.average(days)
+    res.status(200).send({ data: data })
+  })
+};
+
 exports.loginStatus = (req, res) => {
   res.status(200).send({ message: 'Logged in' })
 };
-
-
-exports.moderatorBoard = (req, res) => {
-  res.status(200).send("Moderator Content.");
-};
-
-exports.adminBoard = (req, res) => {
-  res.status(200).send("Admin Content.");
-};
-
