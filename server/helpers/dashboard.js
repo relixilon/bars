@@ -19,6 +19,7 @@ const getCajas = (days) => {
 }
 
 const dashboard = (days) => {
+  const dash = []
   const week = [
     { weekDay: 'Sunday', days: [] },
     { weekDay: 'Monday', days: [] },
@@ -33,11 +34,14 @@ const dashboard = (days) => {
   })
   week.map(day => {
     cajas = getCajas(day.days)
-    day.average = Math.round(average(cajas))
-    day.max = Math.max(...cajas)
-    day.min = Math.min(...cajas)
+    dash.push({
+      weekDay: day.weekDay,
+      average: Math.round(average(cajas)),
+      max: Math.max(...cajas),
+      min: Math.min(...cajas)
+    })
   })
-  return week
+  return dash
 }
 
 module.exports = {
