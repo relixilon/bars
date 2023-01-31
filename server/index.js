@@ -27,7 +27,9 @@ app.use(express.static('uploads'))
 
 
 var whitelist = [
-  'http://192.168.1.13:8080',
+  'http://192.168.1.14:8080',
+  'http://18.193.129.154',
+
 ];
 var corsOptions = {
   origin: function (origin, callback) {

@@ -18,9 +18,6 @@ exports.getDay = (req, res) => {
       res.status(500).send({ message: err })
       return
     }
-    if (!day) {
-      return res.status(200).send({ message: 'No data for that day' })
-    }
     images = Image.find({
       date: req.body.date,
       bar: req.body.bar
@@ -32,11 +29,68 @@ exports.getDay = (req, res) => {
       if (!images) {
         return res.status(200).send({ message: 'No images for that day' })
       }
+      switch (req.body.bar) {
+        case 'Continental':
+          amounts = [
+            {
+              label: 'Caja',
+              value: day?.amounts.find((amount) => amount.label === 'Caja')?.value,
+            },
+            {
+              label: 'Desayunos',
+              value: day?.amounts.find((amount) => amount.label === 'Desayunos')?.value,
+            },
+            {
+              label: 'Comidas',
+              value: day?.amounts.find((amount) => amount.label === 'Comidas')?.value,
+            },
+            {
+              label: 'Meriendas',
+              value: day?.amounts.find((amount) => amount.label === 'Meriendas')?.value,
+            },
+            {
+              label: 'Efectivo',
+              value: day?.amounts.find((amount) => amount.label === 'Efectivo')?.value,
+            },
+            {
+              label: 'Tarjeta',
+              value: day?.amounts.find((amount) => amount.label === 'Tarjeta')?.value,
+            },
+            {
+              label: 'Carta',
+              value: day?.amounts.find((amount) => amount.label === 'Carta')?.value,
+            },
+            {
+              label: 'Menu',
+              value: day?.amounts.find((amount) => amount.label === 'Menu')?.value,
+            },
+          ]
+          break
+        case 'Jauja':
+          amounts = [
+            {
+              label: 'Caja',
+              value: day?.amounts.find((amount) => amount.label === 'Caja')?.value,
+            },
+          ]
+          break
+        case 'Bro':
+          amounts = [
+            {
+              label: 'Caja',
+              value: day?.amounts.find((amount) => amount.label === 'Caja')?.value,
+            },
+            {
+              label: 'Caja2',
+              value: day?.amounts.find((amount) => amount.label === 'Caja2')?.value,
+            },
+          ]
+          break
+      }
       res.status(200).send({
-        amount: day.amount,
-        notes: day.notes,
+        amounts: day ? day.amounts : amounts,
+        notes: day?.notes,
         images: images
-
       })
     })
   })
@@ -44,7 +98,6 @@ exports.getDay = (req, res) => {
 
 // submit day or update amount if exists
 exports.submitDay = (req, res) => {
-
   Day.findOne({
     date: req.body.date,
     bar: req.body.bar
@@ -53,15 +106,17 @@ exports.submitDay = (req, res) => {
       res.status(500).send({ message: err })
       return
     }
+    console.log(req.body.amounts)
     if (!day) {
       const day = new Day({
         date: req.body.date,
         bar: req.body.bar,
-        amount: req.body.amount,
+        amounts: req.body.amounts,
         notes: req.body.notes,
       });
       day.save((err, day) => {
         if (err) {
+          console.log(err)
           res.status(500).send({ message: err })
           return
         }
@@ -83,7 +138,7 @@ exports.submitDay = (req, res) => {
         });
       }
     } else {
-      day.amount = req.body.amount
+      day.amounts = req.body.amounts
       day.notes = req.body.notes
       if (req.body.images) {
         req.body.images.forEach(img => {
@@ -100,7 +155,6 @@ exports.submitDay = (req, res) => {
           })
         });
       }
-
       day.save((err, day) => {
         if (err) {
           res.status(500).send({ message: err })
@@ -138,7 +192,7 @@ exports.getImage = (req, res) => {
     if (!img) {
       return res.status(200).send({ message: 'No image for that day' })
     }
-    let bitmap = fs.readFileSync('/home/mario/projects/bar/server/' + img.path);
+    let bitmap = fs.readFileSync('./' + img.path);
     let base64 = bitmap.toString('base64');
     res.status(200).send({ img: base64 })
   })
@@ -158,7 +212,7 @@ exports.getImages = (req, res) => {
     }
     let bitmaps = []
     images.forEach(img => {
-      let bitmap = fs.readFileSync('/home/mario/projects/bar/server/' + img.path);
+      let bitmap = fs.readFileSync('./' + img.path);
       let base64 = bitmap.toString('base64');
       bitmaps.push({
         id: img._id,
@@ -190,7 +244,6 @@ exports.getUser = (req, res) => {
         return
       }
       if (!bars) {
-        console.log('No bars for that user')
         return
       }
       res.status(200).send({
@@ -215,7 +268,7 @@ exports.deleteImage = (req, res) => {
     if (!img) {
       return res.status(200).send({ message: 'No image for that id' })
     }
-    fs.unlinkSync('/home/mario/projects/bar/server/' + img.path)
+    fs.unlinkSync('./' + img.path)
     Image.deleteOne({
       _id: req.body.id,
     }).exec((err, img) => {
@@ -243,7 +296,7 @@ exports.getDashboard = (req, res) => {
     if (!days) {
       return res.status(200).send({ message: 'No days for that bar' })
     }
-    data = dashboard.average(days)
+    data = dashboard.dashboard(days)
     res.status(200).send({ data: data })
   })
 };
